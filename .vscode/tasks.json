@@ -4,7 +4,7 @@
     {
       "label": "Clean executables",
       "type": "shell",
-      "command": "find . -type f  ! -name \"*.*\"  -delete",
+      "command": "find . -type f ! -name \"*.*\" ! -path \"./.git/*\" -delete",
       "problemMatcher": []
     }
   ]
