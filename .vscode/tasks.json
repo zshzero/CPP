@@ -1,0 +1,11 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Clean executables",
+      "type": "shell",
+      "command": "find . -type f  ! -name \"*.*\"  -delete",
+      "problemMatcher": []
+    }
+  ]
+}
