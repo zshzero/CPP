@@ -7,7 +7,13 @@ template <typename T> class Vector {
 public:
   Vector() {}
 
-  ~Vector() { delete[] m_data_; }
+  ~Vector() {
+    // delete[] m_data_;
+    // calling destructor manually for each element and
+    // deallocating vector memory
+    Clear();
+    ::operator delete(m_data_);
+  }
 
   // index operator for vector
   const T &operator[](size_t index) const { return m_data_[index]; }
@@ -31,7 +37,9 @@ public:
     ReAllocate(true);
     // std::move changes behavior from copying to moving during assignment
     // compiler will treat value as an lvalue if you don’t use std::move
-    m_data_[m_size_++] = std::move(value);
+    // m_data_[m_size_++] = std::move(value);
+    // constructing object in passed memory using Placement new operator
+    new (&m_data_[m_size_++]) T(std::move(value));
   }
 
   void PopBack() {
@@ -87,49 +95,58 @@ private:
     m_capacity_ = std::pow(m_resize_base, m_resize_power);
 
     // create array with new capacity and move the elements
-    T *new_block = new T[m_capacity_];
+    // T *new_block = new T[m_capacity_];
+    // changing the way we allocate
+    // Object initialization isn't required. Only memory needs to be reserved
+    T *new_block = (T *)(operator new(m_capacity_ * sizeof(T)));
 
     for (size_t i = 0; i < m_size_; i++) {
       new (&new_block[i]) T(std::move(m_data_[i]));
+      // calling destructor manually after move as delete keyword is not used
+      m_data_[i].~T();
     }
 
     // deallocates previous memory and point to the new one
-    delete[] m_data_;
+    // delete[] m_data_;
+    // changing the way we deallocate
+    // Clearing only memory and not calling destructor
+    ::operator delete(m_data_);
     m_data_ = new_block;
   }
 };
 
 struct Point {
-  float x;
-  float y;
-  float z;
+  float x, y, z;
+  int *memory_block;
 
-  Point() : x(0), y(0), z(0) {}
-  Point(float x, float y, float z) : x(x), y(y), z(z) {}
+  Point() : x(0), y(0), z(0) { memory_block = new int[5]; }
+  Point(float x, float y, float z) : x(x), y(y), z(z) {
+    memory_block = new int[5];
+  }
 
-  Point(const Point &other) : x(other.x), y(other.y), z(other.z) {
-    std::cout << "Copy\n";
-  }
-  Point &operator=(const Point &other) {
-    x = other.x;
-    y = other.y;
-    z = other.z;
-    std::cout << "Copy\n";
-    return *this;
-  }
+  // Deleting copy constructor
+  Point(const Point &other) = delete;
+  Point &operator=(const Point &other) = delete;
 
   Point(Point &&other) : x(other.x), y(other.y), z(other.z) {
+    memory_block = other.memory_block;
+    other.memory_block = nullptr;
     std::cout << "Move\n";
   }
   Point &operator=(Point &&other) {
     x = other.x;
     y = other.y;
     z = other.z;
+    memory_block = other.memory_block;
+    other.memory_block = nullptr;
     std::cout << "Move\n";
     return *this;
   }
 
-  ~Point() { std::cout << "Destroy\n"; }
+  ~Point() {
+    std::cout << "Destroy\n";
+    delete[] memory_block;
+  }
 
   friend std::ostream &operator<<(std::ostream &os, const Point &value) {
     std::cout << value.x << "\t" << value.y << "\t" << value.z;
