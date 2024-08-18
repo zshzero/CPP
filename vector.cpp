@@ -3,8 +3,54 @@
 #include <string>
 #include <utility>
 
-template <typename T> class Vector {
+template <typename Vector> class VectorIterator {
 public:
+  using ValueType = typename Vector::ValueType;
+
+  VectorIterator(ValueType *ptr) : m_ptr_(ptr) {}
+
+  VectorIterator &operator++() {
+    ++m_ptr_;
+    return *this;
+  }
+  VectorIterator operator++(int) {
+    VectorIterator temp = *this;
+    (*this)++;
+    return temp;
+  }
+
+  VectorIterator &operator--() {
+    --m_ptr_;
+    return *this;
+  }
+  VectorIterator operator--(int) {
+    VectorIterator temp = *this;
+    (*this)--;
+    return temp;
+  }
+
+  ValueType &operator[](int index) { return *(m_ptr_ + index); }
+
+  ValueType *operator->() { return m_ptr_; }
+
+  ValueType &operator*() { return *m_ptr_; }
+
+  bool operator==(const VectorIterator &other) {
+    return m_ptr_ == other.m_ptr_;
+  }
+
+  bool operator!=(const VectorIterator &other) { return !(*this == other); }
+
+private:
+  ValueType *m_ptr_;
+};
+
+template <typename T> class Vector {
+
+public:
+  using ValueType = T;
+  using Iterator = VectorIterator<Vector<T>>;
+
   Vector() {}
 
   ~Vector() {
@@ -20,6 +66,9 @@ public:
   T &operator[](size_t index) { return m_data_[index]; }
 
   size_t const Size() const { return m_size_; }
+
+  Iterator begin() { return Iterator(m_data_); }
+  Iterator end() { return Iterator(m_data_ + m_size_); }
 
   // just lvalue reference doesn't make sense as value is copied rather than
   // referenced even when variable is reference type.(=) operator in C++
@@ -167,7 +216,9 @@ int main() {
   v.PushBack("a");
   v.PushBack("b");
   v.PushBack("c");
-  PrintVector(v);
+  for (const std::string &ele : v) {
+    std::cout << ele << std::endl;
+  }
   v.PopBack();
   PrintVector(v);
   v.Clear();
@@ -177,7 +228,9 @@ int main() {
   v1.PushBack(Point());
   v1.PushBack(Point(1, 2, 3));
   v1.PopBack();
-  PrintVector(v1);
+  for (const Point &ele : v1) {
+    std::cout << ele << std::endl;
+  }
 
   v1.EmplaceBack(0, 0, 0);
   v1.EmplaceBack(1, 2, 3);
