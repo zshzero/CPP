@@ -15,7 +15,8 @@ public:
   }
   VectorIterator operator++(int) {
     VectorIterator temp = *this;
-    (*this)++;
+    // ++(*this); // calling the above pre-incr method
+    ++m_ptr_;
     return temp;
   }
 
@@ -25,7 +26,8 @@ public:
   }
   VectorIterator operator--(int) {
     VectorIterator temp = *this;
-    (*this)--;
+    // --(*this); // calling the above pre-decr method
+    --m_ptr_;
     return temp;
   }
 
